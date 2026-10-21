@@ -2,6 +2,22 @@ import { SUPABASE_URL, SUPABASE_KEY, MEDIA_BUCKET, isConfigured } from './config
 import { DEFAULT_SETTINGS, DEFAULT_POSTS } from './defaults.js';
 
 let _client;
+
+// Snelle, lichte leesfunctie voor bezoekers (zonder de 100 kB Supabase-bibliotheek),
+// met een tijdslimiet: reageert de database niet binnen 6 seconden, dan toont de site
+// de standaardinhoud in plaats van te blijven laden.
+async function rest(path) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 6000);
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers: { apikey: SUPABASE_KEY }, signal: ctrl.signal });
+    if (!r.ok) throw new Error(`Supabase ${r.status}`);
+    return await r.json();
+  } finally { clearTimeout(timer); }
+}
+const nowIso = () => encodeURIComponent(new Date().toISOString());
+// Ingelogd (Cindy) → via de Supabase-client, zodat ze ook concepten ziet
+const useClient = () => looksLoggedIn();
 export async function db() {
   if (!isConfigured()) return null;
   if (!_client) {
@@ -28,11 +44,13 @@ function mergeSettings(rows) {
 let _settings;
 export async function getSettings() {
   if (_settings) return _settings;
-  const c = await db();
-  if (!c) return (_settings = structuredClone(DEFAULT_SETTINGS));
-  const { data, error } = await c.from('settings').select('key,value');
-  if (error) console.warn('settings', error);
-  return (_settings = mergeSettings(data));
+  if (!isConfigured()) return (_settings = structuredClone(DEFAULT_SETTINGS));
+  try {
+    return (_settings = mergeSettings(await rest('settings?select=key,value')));
+  } catch (e) {
+    console.warn('settings', e);
+    return (_settings = structuredClone(DEFAULT_SETTINGS));
+  }
 }
 export function clearSettingsCache() { _settings = null; }
 
@@ -45,8 +63,12 @@ export async function saveSetting(key, value) {
 
 // ── Nieuws ─────────────────────────────────────────────
 export async function getPosts({ limit = 50, includeDrafts = false } = {}) {
+  if (!isConfigured()) return DEFAULT_POSTS.slice(0, limit);
+  if (!includeDrafts && !useClient()) {
+    try { return await rest(`posts?select=*&status=eq.published&published_at=lte.${nowIso()}&order=published_at.desc&limit=${limit}`); }
+    catch (e) { console.warn(e); return []; }
+  }
   const c = await db();
-  if (!c) return DEFAULT_POSTS.slice(0, limit);
   let q = c.from('posts').select('*').order('published_at', { ascending: false }).limit(limit);
   if (!includeDrafts) q = q.eq('status', 'published').lte('published_at', new Date().toISOString());
   const { data, error } = await q;
@@ -55,8 +77,12 @@ export async function getPosts({ limit = 50, includeDrafts = false } = {}) {
 }
 
 export async function getPost(slug) {
+  if (!isConfigured()) return DEFAULT_POSTS.find((p) => p.slug === slug) || null;
+  if (!useClient()) {
+    try { return (await rest(`posts?select=*&slug=eq.${encodeURIComponent(slug)}&limit=1`))[0] || null; }
+    catch (e) { console.warn(e); return null; }
+  }
   const c = await db();
-  if (!c) return DEFAULT_POSTS.find((p) => p.slug === slug) || null;
   const { data } = await c.from('posts').select('*').eq('slug', slug).maybeSingle();
   return data;
 }
