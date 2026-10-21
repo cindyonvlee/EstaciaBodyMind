@@ -264,7 +264,7 @@ fieldset.field { border: 0; padding: 0; margin: 0 0 16px; }
 .credit { margin-left: auto !important; text-align: right; }
 .credit a { opacity: .8; }
 .credit a:hover { opacity: 1; }
-@media (max-width: 760px) { .footer-bottom { flex-direction: column; } .credit { margin-left: 0 !important; text-align: left; } .site-footer { padding-bottom: 72px; } }
+@media (max-width: 760px) { .footer-bottom { flex-direction: column; } .dev-credit { padding-bottom: calc(60px + env(safe-area-inset-bottom)); } }
 
 /* Snel contact: mobiele balk + WhatsApp-knop */
 .contact-bar { display: none; }
@@ -280,11 +280,39 @@ fieldset.field { border: 0; padding: 0; margin: 0 0 16px; }
   .contact-bar .wa { color: #128c4b; }
 }
 
-/* Bewerk-knop (alleen zichtbaar als Cindy is ingelogd) */
-.edit-fab { position: fixed; left: 18px; bottom: 22px; z-index: 50; display: inline-flex; align-items: center; gap: 8px; background: #1f1720; color: #fff; padding: 12px 18px; border-radius: 999px; text-decoration: none; font: 700 .9rem var(--sans); box-shadow: 0 10px 30px -8px rgba(0,0,0,.5); }
-.edit-fab svg { width: 18px; height: 18px; }
-.edit-fab-2 { left: auto; right: 96px; background: var(--accent); }
-@media (max-width: 760px) { .edit-fab { bottom: 76px; } .edit-fab-2 { right: 18px; } }
+/* Credit websitebeheerder – vaste strook onderaan elke pagina */
+.dev-credit { background: #1c1219; color: #f3e9ee; }
+.dev-inner { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px 16px; padding: 14px 0; font-size: .92rem; }
+.dev-q { opacity: .85; }
+.site-footer .dev-btn { display: inline-flex; align-items: center; gap: 10px; background: #25d366; color: #fff; padding: 9px 16px 9px 12px; border-radius: 999px; font-size: .92rem; text-decoration: none; min-height: 44px; box-shadow: 0 6px 16px -8px rgba(37,211,102,.8); transition: transform .2s; }
+.site-footer .dev-btn:hover { color: #fff; transform: translateY(-1px); }
+.dev-btn svg { width: 22px; height: 22px; flex: none; }
+.dev-btn strong { font-weight: 800; }
+@media (max-width: 760px) { .dev-inner { justify-content: center; text-align: center; } }
+.wa-float.hide { opacity: 0; pointer-events: none; transform: scale(.8); }
+.wa-float { transition: opacity .25s, transform .25s; }
+
+/* Werkbalk voor Cindy (alleen zichtbaar als ze is ingelogd) */
+.admin-bar { position: fixed; left: 16px; bottom: 20px; z-index: 50; display: flex; gap: 4px; padding: 5px; background: #1f1720; border-radius: 999px; box-shadow: 0 12px 30px -8px rgba(0,0,0,.55); max-width: calc(100% - 110px); }
+.admin-bar button, .admin-bar a { display: inline-flex; align-items: center; gap: 7px; border: 0; background: transparent; color: #fff; font: 700 .88rem var(--sans); padding: 10px 14px; border-radius: 999px; cursor: pointer; text-decoration: none; min-height: 42px; white-space: nowrap; }
+.admin-bar button:hover, .admin-bar a:hover { background: rgba(255,255,255,.12); }
+.admin-bar svg { width: 17px; height: 17px; }
+.admin-bar .ab-main { background: var(--accent); }
+.admin-bar .ab-main:hover { background: color-mix(in srgb, var(--accent) 85%, #000); }
+.admin-bar .ab-main b { font-size: 1.25rem; line-height: 1; }
+@media (max-width: 760px) {
+  .admin-bar { bottom: calc(68px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); max-width: calc(100% - 20px); }
+  .admin-bar button:not(.ab-main) span:not(:only-child) { display: none; }
+}
+
+/* Zijpaneel om te bewerken */
+.editor-drawer { position: fixed; inset: 0; z-index: 100; }
+.editor-backdrop { position: absolute; inset: 0; background: rgba(20, 10, 18, .45); opacity: 0; transition: opacity .3s; }
+.editor-panel { position: absolute; top: 0; right: 0; bottom: 0; width: min(1040px, 100%); background: #f6f1ea; box-shadow: -20px 0 50px -20px rgba(0,0,0,.5); transform: translateX(100%); transition: transform .3s ease; }
+.editor-panel iframe { width: 100%; height: 100%; border: 0; display: block; }
+.editor-drawer.open .editor-backdrop { opacity: 1; }
+.editor-drawer.open .editor-panel { transform: none; }
+html.editor-open, html.editor-open body { overflow: hidden; }
 
 .toast { position: fixed; left: 50%; bottom: 90px; transform: translate(-50%, 20px); background: #1f1720; color: #fff; padding: 12px 20px; border-radius: 12px; opacity: 0; transition: .3s; z-index: 60; max-width: calc(100% - 32px); text-align: center; }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }

@@ -1,7 +1,7 @@
 // Netlify Edge Function: zet titel, omschrijving, Open Graph-tags (Facebook/WhatsApp)
 // en de gekozen kleuren al in de HTML vóórdat de pagina wordt verstuurd.
 // Zo zien Google, Facebook en WhatsApp de juiste titel, tekst en afbeelding.
-import { SUPABASE_URL, SUPABASE_ANON_KEY, isConfigured } from '../../public/js/config.js';
+import { SUPABASE_URL, SUPABASE_KEY, isConfigured } from '../../public/js/config.js';
 import { DEFAULT_SETTINGS } from '../../public/js/defaults.js';
 import { themeCss } from '../../public/js/themes.js';
 
@@ -10,7 +10,7 @@ const PAGE_KEYS = { '/': 'home', '/over-mij': 'over', '/aanbod': 'aanbod', '/nie
 const esc = (s = '') => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 async function sb(path) {
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } });
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers: { apikey: SUPABASE_KEY } });
   if (!r.ok) throw new Error(`Supabase ${r.status}`);
   return r.json();
 }

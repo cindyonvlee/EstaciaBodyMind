@@ -1,12 +1,12 @@
 // Netlify Edge Function: /sitemap.xml en /robots.txt (automatisch bijgewerkt met nieuwe verhalen)
-import { SUPABASE_URL, SUPABASE_ANON_KEY, isConfigured } from '../../public/js/config.js';
+import { SUPABASE_URL, SUPABASE_KEY, isConfigured } from '../../public/js/config.js';
 
 export default async (request) => {
   const url = new URL(request.url);
   let origin = url.origin;
   let posts = [];
   if (isConfigured()) {
-    const h = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
+    const h = { apikey: SUPABASE_KEY };
     try {
       const [seo] = await (await fetch(`${SUPABASE_URL}/rest/v1/settings?select=value&key=eq.seo`, { headers: h })).json();
       if (seo?.value?.siteUrl) origin = seo.value.siteUrl.replace(/\/$/, '');

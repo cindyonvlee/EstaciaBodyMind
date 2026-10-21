@@ -1,5 +1,5 @@
-import { init, editButton, reveal, setMeta, postCard } from '../site.js';
-import { getPosts, esc } from '../api.js';
+import { init, editButton, reveal, setMeta, postCard, openEditor } from '../site.js';
+import { getPosts, esc, looksLoggedIn } from '../api.js';
 import { LOTUS_MARK } from '../icons.js';
 
 const s = await init('nieuws');
@@ -19,6 +19,7 @@ main.innerHTML = `
   <h1>${esc(s.home.newsTitle)}</h1>
   <p>Persoonlijke verhalen, inzichten en kleine oefeningen om dichter bij jezelf te komen.</p>
   <div class="divider">${LOTUS_MARK}</div>
+  ${looksLoggedIn() ? '<p style="margin-top:8px"><button type="button" class="btn" id="newpost">+ Nieuw verhaal toevoegen</button></p>' : ''}
 </section>
 <section style="padding-top:0">
   <div class="wrap">
@@ -29,5 +30,6 @@ main.innerHTML = `
     ${list.length ? `<div class="posts">${list.map(postCard).join('')}</div>` : '<p class="empty">Er zijn nog geen verhalen geplaatst.</p>'}
   </div>
 </section>`;
+document.getElementById('newpost')?.addEventListener('click', () => openEditor('#/nieuws/nieuw'));
 reveal();
-editButton('/admin/#/nieuws', 'Nieuw verhaal / beheren');
+editButton('/admin/#/nieuws', 'Alle verhalen beheren');

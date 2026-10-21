@@ -1,5 +1,5 @@
-import { init, sanitize, editButton, imgTag, reveal, postCard, setMeta } from '../site.js';
-import { getPosts, esc } from '../api.js';
+import { init, sanitize, editButton, imgTag, reveal, postCard, setMeta, openEditor } from '../site.js';
+import { getPosts, esc, looksLoggedIn } from '../api.js';
 import { icon, LOTUS_MARK } from '../icons.js';
 
 const s = await init('home');
@@ -80,6 +80,7 @@ ${posts.length ? `
     <div class="section-head reveal">
       <p class="eyebrow">Blog</p>
       <h2>${esc(h.newsTitle)}</h2>
+      ${looksLoggedIn() ? '<button type="button" class="btn" id="newpost">+ Nieuw verhaal toevoegen</button>' : ''}
     </div>
     <div class="posts">${posts.map(postCard).join('')}</div>
     <p class="center" style="margin-top:36px"><a class="btn btn-ghost" href="/nieuws">Alle verhalen</a></p>
@@ -99,5 +100,6 @@ ${posts.length ? `
   </div>
 </section>`;
 
+document.getElementById('newpost')?.addEventListener('click', () => openEditor('#/nieuws/nieuw'));
 reveal();
 editButton('/admin/#/pagina/home');

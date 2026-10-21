@@ -91,8 +91,15 @@ function footer(s) {
       </div>
     </div>
     <div class="wrap footer-bottom">
-      <p>© ${year} ${esc(s.site.title)} ${esc(s.site.subtitle)} · <a href="/privacy">Privacy</a></p>
-      <p class="credit"><a href="${devWa}" target="_blank" rel="noopener">${DEVELOPER.label} · <strong>${DEVELOPER.name}</strong> · ${DEVELOPER.phoneDisplay}</a></p>
+      <p>© ${year} ${esc(s.site.title)} ${esc(s.site.subtitle)} · <a href="/privacy">Privacy</a> · ${looksLoggedIn() ? '<a href="/admin/">Beheer</a>' : '<a href="/admin/" data-login>Inloggen</a>'}</p>
+    </div>
+    <div class="dev-credit">
+      <div class="wrap dev-inner">
+        <span class="dev-q">${DEVELOPER.label}</span>
+        <a class="dev-btn" href="${devWa}" target="_blank" rel="noopener" aria-label="WhatsApp ${DEVELOPER.name}, ${DEVELOPER.phoneDisplay}">
+          ${UI.whatsapp}<span><strong>${DEVELOPER.name}</strong> · ${DEVELOPER.phoneDisplay}</span>
+        </a>
+      </div>
     </div>
   </footer>
   <nav class="contact-bar" aria-label="Snel contact">
@@ -103,18 +110,60 @@ function footer(s) {
   ${c.whatsapp ? `<a class="wa-float" href="${waLink(c.whatsapp, c.whatsappText)}" target="_blank" rel="noopener" aria-label="Stuur Cindy een WhatsApp">${UI.whatsapp}</a>` : ''}`;
 }
 
+// ── Bewerken vanaf de website ──────────────────────────
+// Als Cindy is ingelogd verschijnt onderaan een werkbalk. De knoppen openen de
+// beheerschermen in een zijpaneel óp de website; na opslaan ververst de pagina.
+export function openEditor(route = '#/', { mode = 'edit' } = {}) {
+  closeEditor();
+  const wrap = document.createElement('div');
+  wrap.className = 'editor-drawer';
+  wrap.innerHTML = `<div class="editor-backdrop"></div><div class="editor-panel" role="dialog" aria-modal="true" aria-label="Bewerken"><iframe title="Bewerken" src="/admin/?embed=1${route}"></iframe></div>`;
+  document.body.appendChild(wrap);
+  document.documentElement.classList.add('editor-open');
+  requestAnimationFrame(() => wrap.classList.add('open'));
+  wrap.querySelector('iframe').focus();
+  const onMsg = (e) => {
+    if (e.origin !== location.origin || !e.data?.type) return;
+    const { type, path } = e.data;
+    if (type === 'estacia-close') closeEditor();
+    if (type === 'estacia-login' && mode === 'login') location.reload();
+    if (type === 'estacia-open-admin') location.href = path || '/admin/';
+    if (type === 'estacia-saved') {
+      const target = new URL(path || location.pathname, location.origin);
+      if (target.pathname === location.pathname && target.search === location.search) location.reload();
+      else location.href = target.pathname + target.search + target.hash;
+    }
+  };
+  addEventListener('message', onMsg);
+  wrap._off = () => removeEventListener('message', onMsg);
+}
+
+export function closeEditor() {
+  const d = document.querySelector('.editor-drawer');
+  if (!d) return;
+  d._off?.();
+  d.classList.remove('open');
+  document.documentElement.classList.remove('editor-open');
+  setTimeout(() => d.remove(), 300);
+}
+
 export function editButton(href, label = 'Bewerk deze pagina') {
   if (!looksLoggedIn()) return;
-  const a = document.createElement('a');
-  a.className = 'edit-fab';
-  a.href = href;
-  a.innerHTML = `${UI.edit}<span>${label}</span>`;
-  document.body.appendChild(a);
-  const adm = document.createElement('a');
-  adm.className = 'edit-fab edit-fab-2';
-  adm.href = '/admin/';
-  adm.innerHTML = '<span>Beheer</span>';
-  document.body.appendChild(adm);
+  const route = href.includes('#') ? href.slice(href.indexOf('#')) : '#/';
+  const bar = document.createElement('div');
+  bar.className = 'admin-bar';
+  bar.setAttribute('role', 'toolbar');
+  bar.setAttribute('aria-label', 'Beheer');
+  bar.innerHTML = `
+    <button type="button" class="ab-main" data-r="#/nieuws/nieuw"><b>+</b><span>Nieuw verhaal</span></button>
+    <button type="button" data-r="${route}">${UI.edit}<span>${label}</span></button>
+    <button type="button" data-r="#/stijl" title="Kleuren & stijl"><span>🎨</span></button>
+    <a href="/admin/" title="Volledig beheer"><span>⚙</span></a>`;
+  bar.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-r]');
+    if (b) openEditor(b.dataset.r);
+  });
+  document.body.appendChild(bar);
 }
 
 export async function init(active) {
@@ -130,6 +179,13 @@ export async function init(active) {
     nav.classList.toggle('open', open);
     t.innerHTML = open ? UI.close : UI.menu;
   });
+  // Inloggen vanaf de website (link in de footer)
+  document.querySelector('[data-login]')?.addEventListener('click', (e) => { e.preventDefault(); openEditor('#/', { mode: 'login' }); });
+  // Zwevende WhatsApp-knop verbergen zodra de footer in beeld is (daar staan de contactgegevens al)
+  const fl = document.querySelector('.wa-float');
+  if (fl && 'IntersectionObserver' in window) {
+    new IntersectionObserver(([en]) => fl.classList.toggle('hide', en.isIntersecting)).observe(document.querySelector('.site-footer'));
+  }
   const hdr = document.querySelector('.site-header');
   const onScroll = () => hdr.classList.toggle('scrolled', scrollY > 10);
   addEventListener('scroll', onScroll, { passive: true }); onScroll();

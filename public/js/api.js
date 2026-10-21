@@ -1,4 +1,4 @@
-import { SUPABASE_URL, SUPABASE_ANON_KEY, MEDIA_BUCKET, isConfigured } from './config.js';
+import { SUPABASE_URL, SUPABASE_KEY, MEDIA_BUCKET, isConfigured } from './config.js';
 import { DEFAULT_SETTINGS, DEFAULT_POSTS } from './defaults.js';
 
 let _client;
@@ -6,7 +6,7 @@ export async function db() {
   if (!isConfigured()) return null;
   if (!_client) {
     const { createClient } = await import('/vendor/supabase.mjs');
-    _client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, storageKey: 'estacia-auth' } });
+    _client = createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, storageKey: 'estacia-auth' } });
   }
   return _client;
 }

@@ -3,14 +3,23 @@
 Welkom bij je eigen website! Alles wat je nodig hebt, beheer je zelf.
 
 ## Inloggen
-- Ga naar **jouwdomein.nl/admin**
+- Klik helemaal onderaan je website op **Inloggen**, of ga naar **jouwdomein.nl/admin**
 - Log in met je e-mailadres en wachtwoord.
 - Wachtwoord vergeten? Klik op **Wachtwoord vergeten?**, dan krijg je een mail.
 
 Tip: zet **jouwdomein.nl/admin** als bladwijzer of op het beginscherm van je telefoon.
 
+## Werken vanaf je eigen website
+Ben je ingelogd, dan zie je onderaan je website een werkbalk:
+- **+ Nieuw verhaal**: schrijf direct een nieuw verhaal.
+- **Bewerk deze pagina** of **Bewerk dit verhaal**: pas aan wat je op dat moment ziet.
+- **🎨**: kies andere kleuren.
+- **⚙**: het volledige beheer (berichten, instellingen, hulp).
+
+Er schuift dan een paneel open over je website. Klik op **Opslaan & bekijken**: het paneel sluit en je ziet meteen het resultaat.
+
 ## Een verhaal plaatsen (blog/nieuws)
-1. Klik op **Nieuw verhaal schrijven**.
+1. Klik op **+ Nieuw verhaal** (op je website) of **Nieuw verhaal schrijven** (in het beheer).
 2. Vul een **titel** in. Het webadres maakt de website zelf.
 3. Schrijf een **korte samenvatting** van 1 à 2 zinnen.
 4. Schrijf of plak je **verhaal**. Kopiëren uit Facebook of Word mag.
@@ -27,7 +36,6 @@ Bij **Blog & nieuws** staan onder elk verhaal knoppen:
 - **Instagram** ondersteunt geen links. Op je telefoon opent het deelmenu: kies Instagram, de tekst staat al gekopieerd en die plak je erbij. Op de computer wordt de foto gedownload en de tekst gekopieerd.
 
 ## Iets aanpassen op je website
-- Kijk je op je website terwijl je bent ingelogd? Dan zie je linksonder **Bewerk deze pagina**.
 - Via **Pagina's** pas je Home, Over mij, Aanbod, Contact en Privacy aan.
 - Je telefoonnummer, WhatsApp en adres staan bij **Pagina's → Contact**. Ze worden overal op de site gebruikt.
 - Klik altijd op **Opslaan & bekijken**. Je gaat dan meteen naar de pagina zelf.

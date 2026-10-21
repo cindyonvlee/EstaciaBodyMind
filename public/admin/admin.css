@@ -188,3 +188,14 @@ details.panel summary { cursor: pointer; font-weight: 800; }
   .savebar .status { display: none; }
   .savebar .btn { flex: 1; padding: 10px 12px; font-size: .88rem; }
 }
+
+/* Embed-modus: beheer in een zijpaneel op de website */
+.embedbar { position: sticky; top: 0; z-index: 40; display: flex; align-items: center; gap: 10px; background: var(--plum); color: #fff; padding: 10px 16px; }
+.embedbar .t { font: 600 1.25rem var(--serif); letter-spacing: .06em; margin-right: auto; }
+.embedbar .btn.ghost { color: #fff; border-color: rgba(255,255,255,.35); }
+.embedbar .btn.ghost:hover { background: rgba(255,255,255,.1); }
+.embedbar .btn:not(.ghost) { background: #fff; color: var(--plum); border-color: #fff; }
+.embed-main { max-width: none; padding-top: 20px; }
+.embed .savebar { margin-bottom: 0; }
+.embed .login { min-height: 100vh; }
+@media (max-width: 560px) { .embedbar a.btn { display: none; } }

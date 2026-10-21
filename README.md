@@ -7,7 +7,7 @@ Cindy beheert alles zelf via `/admin`.
 public/                 ← wordt door Netlify gepubliceerd
   index.html, over-mij.html, aanbod.html, nieuws.html, artikel.html, contact.html, privacy.html, 404.html
   admin/                ← beheeromgeving (login via Supabase)
-  js/config.js          ← ⚙️ Supabase-sleutels + credit websitebouwer (NIET via admin aanpasbaar)
+  js/config.js          ← ⚙️ Supabase URL + publishable key + credit websitebouwer (NIET via admin aanpasbaar)
   js/defaults.js        ← startinhoud (ook terugval als de database niet bereikbaar is)
   js/themes.js          ← de 6 kleurstijlen
   vendor/               ← supabase-js, Quill (editor), DOMPurify – lokaal, geen CDN nodig
@@ -26,7 +26,8 @@ supabase/schema.sql     ← tabellen, beveiliging, foto-opslag en startinhoud
 5. Ga naar **Authentication → URL Configuration**:
    - Site URL: `https://www.haar-domein.nl`
    - Redirect URLs: `https://www.haar-domein.nl/admin/` (en eventueel `https://*.netlify.app/admin/` voor testen)
-6. Kopieer bij **Project Settings → API** de *Project URL* en de *anon public key* naar `public/js/config.js`.
+6. Kopieer bij **Project Settings → API Keys** de **Publishable key** (`sb_publishable_…`) naar `SUPABASE_KEY` in `public/js/config.js`, en de *Project URL* (Project Settings → Data API) naar `SUPABASE_URL`.
+   De oude *anon* key (tab "Legacy API Keys") werkt ook. **Nooit** de *Secret key* gebruiken.
 
 ### 2. GitHub
 Zet deze map in een (privé) repository en push naar `main`.
@@ -51,10 +52,11 @@ Laat haar meteen een eigen wachtwoord kiezen via **Instellingen → Wachtwoord w
 - Delen naar Facebook, WhatsApp en Instagram (telefoon: deelmenu met foto; computer: tekst kopiëren + foto downloaden). Bezoekers hebben dezelfde knoppen onder elk verhaal.
 - Alle pagina's (Home, Over mij, Aanbod, Contact, Privacy) en contactgegevens aanpassen.
 - 6 kleurstijlen (Gouden Zonsopgang, Lavendel Avond, Rozentuin, Aarde & Honing, Maanlicht, Zonnebloem) + losse kleuren.
-- Na opslaan gaat ze direct naar de pagina zelf. Op de site ziet ze als ingelogde gebruiker een knop **Bewerk deze pagina**.
+- Bewerken vanaf de website zelf: ingelogd ziet ze onderaan een werkbalk (**+ Nieuw verhaal**, **Bewerk deze pagina/dit verhaal**, kleuren, volledig beheer). Die opent een zijpaneel óp de site (de admin in `?embed=1`-modus); na opslaan ververst de pagina. Inloggen kan via de link **Inloggen** in de footer.
+- Na opslaan gaat ze direct naar de pagina zelf.
 
 ## Credit websitebouwer
-Staat vast rechtsonder in de footer en opent WhatsApp naar 06-17039432 met een vooraf ingevulde tekst.
+Eigen donkere strook onder de footer op elke pagina: *"Ook zo'n website? Neem contact op met de websitebeheerder"* + groene WhatsApp-knop **Jobe United Solutions · 06-17039432** (opent WhatsApp met vooraf ingevulde tekst).
 Aanpassen kan alleen in `public/js/config.js` (`DEVELOPER`), dus niet via de admin.
 
 ## Lokaal bekijken

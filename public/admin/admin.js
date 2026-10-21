@@ -10,6 +10,10 @@ import { THEMES, COLOR_LABELS } from '/js/themes.js';
 import { ICONS } from '/js/icons.js';
 
 const DEMO = !isConfigured();
+// Embed-modus: de beheerschermen openen in een zijpaneel óp de website (zie /js/site.js → openEditor)
+const EMBED = new URLSearchParams(location.search).has('embed');
+const tellSite = (msg) => { try { parent.postMessage(msg, location.origin); } catch {} };
+if (EMBED) document.documentElement.classList.add('embed');
 const initialHash = location.hash;
 const app = document.getElementById('app');
 let client = null;
@@ -33,7 +37,31 @@ function toast(msg, ms = 2800) {
 function markDirty() { dirty = true; }
 addEventListener('beforeunload', (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
 
-function goToSite(path) { dirty = false; location.href = path; }
+function goToSite(path) {
+  dirty = false;
+  if (EMBED) return tellSite({ type: 'estacia-saved', path });
+  location.href = path;
+}
+
+function closeEmbed() {
+  if (dirty && !confirm('Je hebt wijzigingen die nog niet zijn opgeslagen. Toch sluiten?')) return;
+  dirty = false;
+  tellSite({ type: 'estacia-close' });
+}
+
+if (EMBED) {
+  // Links naar de website openen in het hoofdvenster, niet in het paneel
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('a[href]');
+    if (!a || a.target === '_blank' || a.getAttribute('href').startsWith('#') || a.href.startsWith('mailto:') || a.href.startsWith('tel:')) return;
+    const url = new URL(a.href, location.href);
+    if (url.origin !== location.origin) return;
+    e.preventDefault();
+    if (url.pathname.startsWith('/admin')) return tellSite({ type: 'estacia-open-admin', path: url.pathname + url.hash });
+    goToSite(url.pathname + url.search + url.hash);
+  });
+  addEventListener('keydown', (e) => { if (e.key === 'Escape') closeEmbed(); });
+}
 
 async function copyText(t) {
   try { await navigator.clipboard.writeText(t); } catch {
@@ -75,7 +103,7 @@ function renderLogin(msg = '') {
       <div class="f"><label for="pw">Wachtwoord</label><input type="password" id="pw" autocomplete="current-password" required></div>
       <button class="btn" type="submit">Inloggen</button>
       <p style="text-align:center;margin:16px 0 0"><a href="#" id="forgot">Wachtwoord vergeten?</a></p>
-      <p style="text-align:center;margin:8px 0 0"><a href="/">← Terug naar de website</a></p>
+      ${EMBED ? '<p style="text-align:center;margin:8px 0 0"><a href="#" id="xclose">Sluiten</a></p>' : '<p style="text-align:center;margin:8px 0 0"><a href="/">← Terug naar de website</a></p>'}
     </form>
   </div></div>`;
   $('#lf').addEventListener('submit', async (e) => {
@@ -84,9 +112,11 @@ function renderLogin(msg = '') {
     const { error } = await client.auth.signInWithPassword({ email: $('#em').value.trim(), password: $('#pw').value });
     if (error) return renderLogin('<div class="err">Inloggen lukte niet. Controleer je e-mailadres en wachtwoord.</div>');
     settings = await getSettings();
-    location.hash = '#/';
+    if (EMBED) tellSite({ type: 'estacia-login' });
+    if (!EMBED) location.hash = '#/';
     route();
   });
+  $('#xclose')?.addEventListener('click', (e) => { e.preventDefault(); closeEmbed(); });
   $('#forgot').addEventListener('click', async (e) => {
     e.preventDefault();
     const email = $('#em').value.trim();
@@ -137,7 +167,20 @@ const NAV = [
   ['#/hulp', '❓', 'Hulp'],
 ];
 
+async function embedShell(contentFn) {
+  app.innerHTML = `
+  <div class="embedbar"><span class="t">✨ Bewerken</span><a class="btn sm ghost" href="/admin/">Volledig beheer</a><button type="button" class="btn sm" id="xclose">✕ Sluiten</button></div>
+  <main class="main embed-main" id="view">
+    ${DEMO ? '<div class="err" style="font-weight:600">Demo-modus: wijzigingen worden niet opgeslagen.</div>' : ''}
+  </main>`;
+  $('#xclose').addEventListener('click', closeEmbed);
+  await contentFn($('#view'));
+  lastHash = location.hash;
+  scrollTo(0, 0);
+}
+
 async function shell(contentFn) {
+  if (EMBED) return embedShell(contentFn);
   const hash = location.hash || '#/';
   const unread = await unreadCount();
   app.innerHTML = `
@@ -571,6 +614,14 @@ async function viewPostEditor(v, id) {
   v.append(saveBar([
     button('Opslaan & bekijken', '', (b) => busy(b, () => doSave(true))),
     button('Alleen opslaan', 'ghost', (b) => busy(b, () => doSave(false))),
+    ...(id ? [button('Verwijderen', 'danger', (b) => busy(b, async () => {
+      if (!confirm(`Weet je zeker dat je “${post.title}” wilt verwijderen? Dit kan niet ongedaan worden gemaakt.`)) return;
+      if (DEMO) return toast('Demo: niet verwijderd');
+      await deletePost(id);
+      dirty = false;
+      if (EMBED) return goToSite('/nieuws');
+      toast('Verwijderd'); location.hash = '#/nieuws';
+    }))] : []),
   ]));
   if (!id) title.input.focus();
 }
@@ -866,7 +917,9 @@ async function viewHelp(v) {
     </ul>
     <h2>✏️ Iets aanpassen op je website</h2>
     <ul>
-      <li>Ben je ingelogd en kijk je op je website? Dan zie je linksonder de knop <strong>Bewerk deze pagina</strong>. Die brengt je direct naar de juiste plek.</li>
+      <li>Ben je ingelogd en kijk je op je website? Dan zie je onderaan een <strong>werkbalk</strong>: <strong>+ Nieuw verhaal</strong>, <strong>Bewerk deze pagina</strong> (of <em>Bewerk dit verhaal</em>), 🎨 kleuren en ⚙ volledig beheer.</li>
+      <li>Die knoppen openen een paneel óp je website. Na <strong>Opslaan & bekijken</strong> sluit het paneel en zie je meteen het resultaat.</li>
+      <li>Inloggen kan ook direct vanaf je website: klik helemaal onderaan op <strong>Inloggen</strong>.</li>
       <li>Via <strong>Pagina’s</strong> pas je teksten en foto’s aan van Home, Over mij, Aanbod, Contact en Privacy.</li>
       <li>Je telefoonnummer en WhatsApp pas je aan bij <strong>Pagina’s → Contact</strong>. Die worden overal op de site gebruikt.</li>
     </ul>
