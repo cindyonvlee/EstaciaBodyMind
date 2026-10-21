@@ -1,0 +1,38 @@
+[build]
+  publish = "public"
+  # Geen build-stap nodig: de site is puur HTML/CSS/JS.
+  command = ""
+
+# Mooie URL's voor blogberichten: /nieuws/mijn-verhaal → artikel.html
+[[redirects]]
+  from = "/nieuws/*"
+  to = "/artikel.html"
+  status = 200
+
+[[headers]]
+  for = "/*.mjs"
+  [headers.values]
+    Content-Type = "text/javascript; charset=utf-8"
+
+[[headers]]
+  for = "/vendor/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/img/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/admin/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
