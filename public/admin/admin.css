@@ -199,3 +199,8 @@ details.panel summary { cursor: pointer; font-weight: 800; }
 .embed .savebar { margin-bottom: 0; }
 .embed .login { min-height: 100vh; }
 @media (max-width: 560px) { .embedbar a.btn { display: none; } }
+
+/* Aanbod: regel naar de eigen pagina */
+.page-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px; padding: 12px 14px; border-radius: 10px; background: #f8f3ec; font-size: .92rem; }
+.page-row.on { background: #f6eef4; }
+.page-row a { color: var(--plum); font-weight: 600; word-break: break-all; }

@@ -1,6 +1,6 @@
-import { init, editButton, reveal, setMeta, waLink } from '../site.js';
+import { init, editButton, reveal, setMeta, waLink, serviceCard } from '../site.js';
 import { esc } from '../api.js';
-import { icon, LOTUS_MARK } from '../icons.js';
+import { LOTUS_MARK } from '../icons.js';
 
 const s = await init('aanbod');
 const sv = s.services;
@@ -19,13 +19,7 @@ main.innerHTML = `
 <section style="padding-top:0">
   <div class="wrap">
     <div class="cards">
-      ${sv.items.map((it) => `
-        <article class="card reveal">
-          <div class="ic">${icon(it.icon)}</div>
-          <h2 style="font-size:1.55rem">${esc(it.title)}</h2>
-          <p>${esc(it.text)}</p>
-          ${it.price ? `<p class="price">${esc(it.price)}</p>` : ''}
-        </article>`).join('')}
+      ${sv.items.map((it) => serviceCard(it, { heading: 'h2', showPrice: true })).join('')}
     </div>
   </div>
 </section>

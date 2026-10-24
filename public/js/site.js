@@ -1,7 +1,8 @@
 import { getSettings, looksLoggedIn, esc, formatDate } from './api.js';
 import { applyTheme } from './themes.js';
 import { DEVELOPER } from './config.js';
-import { UI, LOTUS_MARK } from './icons.js';
+import { UI, LOTUS_MARK, icon } from './icons.js';
+import { hasPage, servicePath } from './services.js';
 
 const NAV = [
   { key: 'home', href: '/', label: 'Home' },
@@ -276,4 +277,17 @@ export function postCard(p) {
 export function imgTag(img, { cls = '', sizes = '', eager = false } = {}) {
   if (!img?.url) return '';
   return `<img class="${cls}" src="${esc(img.url)}" alt="${esc(img.alt || '')}" ${img.title ? `title="${esc(img.title)}"` : ''} ${eager ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async" ${sizes}>`;
+}
+
+// Kaartje voor een aanbod-onderdeel. Heeft het een eigen pagina, dan is de hele kaart klikbaar.
+export function serviceCard(it, { heading = 'h3', showPrice = false } = {}) {
+  const link = hasPage(it);
+  const H = heading;
+  return `<article class="card reveal${link ? ' has-link' : ''}">
+    <div class="ic">${icon(it.icon)}</div>
+    <${H} class="card-title">${link ? `<a class="card-link" href="${servicePath(it)}">${esc(it.title)}</a>` : esc(it.title)}</${H}>
+    <p>${esc(it.text)}</p>
+    ${showPrice && it.price ? `<p class="price">${esc(it.price)}</p>` : ''}
+    ${link ? '<span class="more" aria-hidden="true">Lees meer →</span>' : ''}
+  </article>`;
 }

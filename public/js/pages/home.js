@@ -1,6 +1,6 @@
-import { init, sanitize, editButton, imgTag, reveal, postCard, setMeta, openEditor } from '../site.js';
+import { init, sanitize, editButton, imgTag, reveal, postCard, setMeta, openEditor, serviceCard } from '../site.js';
 import { getPosts, esc, looksLoggedIn } from '../api.js';
-import { icon, LOTUS_MARK } from '../icons.js';
+import { LOTUS_MARK } from '../icons.js';
 
 const s = await init('home');
 const h = s.home;
@@ -44,12 +44,7 @@ main.innerHTML = `
       <p>${esc(s.services.intro)}</p>
     </div>
     <div class="cards">
-      ${s.services.items.slice(0, 4).map((it) => `
-        <article class="card reveal">
-          <div class="ic">${icon(it.icon)}</div>
-          <h3>${esc(it.title)}</h3>
-          <p>${esc(it.text)}</p>
-        </article>`).join('')}
+      ${s.services.items.slice(0, 4).map((it) => serviceCard(it)).join('')}
     </div>
     <p class="center" style="margin-top:36px"><a class="btn btn-ghost" href="/aanbod">Bekijk het hele aanbod</a></p>
   </div>
