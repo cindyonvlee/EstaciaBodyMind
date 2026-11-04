@@ -9,12 +9,6 @@
   to = "/artikel.html"
   status = 200
 
-# Eigen pagina per aanbod-onderdeel: /aanbod/burn-out-herstel → aanbod-item.html
-[[redirects]]
-  from = "/aanbod/*"
-  to = "/aanbod-item.html"
-  status = 200
-
 [[headers]]
   for = "/*.mjs"
   [headers.values]

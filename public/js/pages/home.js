@@ -1,11 +1,13 @@
-import { init, sanitize, editButton, imgTag, reveal, postCard, setMeta, openEditor, serviceCard } from '../site.js';
+import { init, sanitize, editButton, imgTag, reveal, postCard, setMeta, openEditor } from '../site.js';
 import { getPosts, esc, looksLoggedIn } from '../api.js';
-import { LOTUS_MARK } from '../icons.js';
+import { icon, LOTUS_MARK } from '../icons.js';
 
 const s = await init('home');
 const h = s.home;
 const [posts, intro] = await Promise.all([getPosts({ limit: 3 }), sanitize(h.introText)]);
 const seo = s.seo.pages.home;
+// Slogan: eerst die van de homepagina, anders (oude plek) die uit Instellingen
+const tagline = h.tagline !== undefined ? h.tagline : s.site.tagline;
 setMeta({ title: seo.title, description: seo.description, image: s.seo.image });
 
 const main = document.getElementById('main');
@@ -21,7 +23,7 @@ main.innerHTML = `
         <a class="btn" href="/contact#afspraak">${esc(h.ctaPrimary)}</a>
         <a class="btn btn-ghost" href="/over-mij">${esc(h.ctaSecondary)}</a>
       </div>
-      ${s.site.tagline ? `<p class="tagline">${esc(s.site.tagline)}</p>` : ''}
+      ${tagline ? `<p class="tagline">${esc(tagline)}</p>` : ''}
     </div>
     <div class="hero-media"><div class="arch">${imgTag(h.heroImage, { eager: true })}</div></div>
   </div>
@@ -39,12 +41,17 @@ main.innerHTML = `
 <section>
   <div class="wrap">
     <div class="section-head reveal">
-      <p class="eyebrow">Waar ik je mee help</p>
+      ${h.servicesEyebrow ? `<p class="eyebrow">${esc(h.servicesEyebrow)}</p>` : ''}
       <h2>${esc(s.services.title)}</h2>
       <p>${esc(s.services.intro)}</p>
     </div>
     <div class="cards">
-      ${s.services.items.slice(0, 4).map((it) => serviceCard(it)).join('')}
+      ${s.services.items.slice(0, 4).map((it) => `
+        <article class="card reveal">
+          <div class="ic">${icon(it.icon)}</div>
+          <h3>${esc(it.title)}</h3>
+          <p>${esc(it.text)}</p>
+        </article>`).join('')}
     </div>
     <p class="center" style="margin-top:36px"><a class="btn btn-ghost" href="/aanbod">Bekijk het hele aanbod</a></p>
   </div>
@@ -53,7 +60,7 @@ main.innerHTML = `
 ${h.spiral?.length ? `
 <section class="alt">
   <div class="wrap center reveal">
-    <p class="eyebrow">Het proces</p>
+    ${h.spiralEyebrow ? `<p class="eyebrow">${esc(h.spiralEyebrow)}</p>` : ''}
     <h2>${esc(h.spiralTitle)}</h2>
     <div class="divider">${LOTUS_MARK}</div>
     <ol class="spiral">${h.spiral.map((x) => `<li>${esc(x)}</li>`).join('')}</ol>
@@ -73,7 +80,7 @@ ${posts.length ? `
 <section>
   <div class="wrap">
     <div class="section-head reveal">
-      <p class="eyebrow">Blog</p>
+      ${h.newsEyebrow ? `<p class="eyebrow">${esc(h.newsEyebrow)}</p>` : ''}
       <h2>${esc(h.newsTitle)}</h2>
       ${looksLoggedIn() ? '<button type="button" class="btn" id="newpost">+ Nieuw verhaal toevoegen</button>' : ''}
     </div>
@@ -85,8 +92,8 @@ ${posts.length ? `
 <section class="cta alt">
   <div class="wrap">
     <div class="cta-box reveal">
-      <h2>Zullen we kennismaken?</h2>
-      <p class="muted">${esc(s.contact.intro)}</p>
+      <h2>${esc(h.ctaTitle)}</h2>
+      ${h.ctaText ? `<p class="muted">${esc(h.ctaText)}</p>` : ''}
       <div class="btn-row">
         <a class="btn" href="/contact#afspraak">Stuur een bericht</a>
         ${s.contact.whatsapp ? `<a class="btn btn-wa" href="https://wa.me/${esc(s.contact.whatsapp)}?text=${encodeURIComponent(s.contact.whatsappText || '')}" target="_blank" rel="noopener">WhatsApp mij</a>` : ''}

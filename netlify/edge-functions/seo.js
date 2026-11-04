@@ -4,7 +4,6 @@
 import { SUPABASE_URL, SUPABASE_KEY, isConfigured } from '../../public/js/config.js';
 import { DEFAULT_SETTINGS } from '../../public/js/defaults.js';
 import { themeCss } from '../../public/js/themes.js';
-import { findService, hasPage } from '../../public/js/services.js';
 
 const PAGE_KEYS = { '/': 'home', '/over-mij': 'over', '/aanbod': 'aanbod', '/nieuws': 'nieuws', '/contact': 'contact', '/privacy': 'privacy' };
 
@@ -29,7 +28,6 @@ export default async (request, context) => {
     let settings = structuredClone(DEFAULT_SETTINGS);
     let post = null;
     const isArticle = path.startsWith('/nieuws/');
-    const isService = path.startsWith('/aanbod/');
 
     if (isConfigured()) {
       const now = new Date().toISOString();
@@ -48,18 +46,7 @@ export default async (request, context) => {
     const canonical = origin + (path === '/' ? '/' : path);
     let title, description, image, type = 'website', extra = '';
 
-    if (isService) {
-      const it = findService(settings, decodeURIComponent(path.slice(8)));
-      if (!it || !hasPage(it)) {
-        status = isConfigured() ? 404 : status;
-        title = 'Pagina niet gevonden – Estacia';
-        extra = '<meta name="robots" content="noindex">';
-      } else {
-        title = it.seo_title || `${it.title} | Estacia`;
-        description = it.seo_description || it.text;
-        image = it.image?.url;
-      }
-    } else if (isArticle) {
+    if (isArticle) {
       if (!post) {
         status = isConfigured() ? 404 : status;
         title = 'Verhaal niet gevonden – Estacia';

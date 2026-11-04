@@ -39,12 +39,12 @@ if (!post) {
   </article>
   <section class="cta" style="padding-bottom:40px">
     <div class="wrap"><div class="cta-box reveal">
-      <h2>Herken je jezelf hierin?</h2>
-      <p class="muted">Je hoeft het niet alleen uit te zoeken. Neem gerust contact op voor een vrijblijvende kennismaking.</p>
+      <h2>${esc(s.blog.ctaTitle)}</h2>
+      ${s.blog.ctaText ? `<p class="muted">${esc(s.blog.ctaText)}</p>` : ''}
       <div class="btn-row"><a class="btn" href="/contact#afspraak">Neem contact op</a></div>
     </div></div>
   </section>
-  ${others.length ? `<section class="alt"><div class="wrap"><div class="section-head"><h2>Meer verhalen</h2></div><div class="posts">${others.map(postCard).join('')}</div></div></section>` : ''}`;
+  ${others.length ? `<section class="alt"><div class="wrap"><div class="section-head"><h2>${esc(s.blog.moreTitle)}</h2></div><div class="posts">${others.map(postCard).join('')}</div></div></section>` : ''}`;
 
   const ld = document.createElement('script');
   ld.type = 'application/ld+json';

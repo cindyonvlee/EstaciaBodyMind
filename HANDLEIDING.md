@@ -36,16 +36,8 @@ Bij **Blog & nieuws** staan onder elk verhaal knoppen:
 - **Instagram** ondersteunt geen links. Op je telefoon opent het deelmenu: kies Instagram, de tekst staat al gekopieerd en die plak je erbij. Op de computer wordt de foto gedownload en de tekst gekopieerd.
 
 ## Iets aanpassen op je website
-- Via **Pagina's** pas je Home, Over mij, Aanbod, Contact en Privacy aan.
-
-## Uitleg bij je aanbod (eigen pagina per onderdeel)
-
-- Ga naar **Pagina's → Aanbod** en klik bij een onderdeel op **Uitleg schrijven →**.
-- Schrijf wat het is, voor wie het is en hoe een sessie verloopt. Geen inspiratie? Klik op **Begin met een opzet** voor kopjes.
-- Foto's zet je in de tekst met het fotoknopje 🖼️, precies waar je cursor staat. Bovenaan kun je ook één grote foto kiezen.
-- Bij **Meer uitleg** zet je vragen of begrippen die bezoekers kunnen openklikken (bijv. "Wat is 5DFlow Spinal Therapy?").
-- Nog niet klaar? Zet de pagina op **Concept**: alleen jij ziet hem (als je ingelogd bent).
-- Zodra er uitleg staat, krijgt het kaartje vanzelf **Lees meer →** en staat de pagina op `/aanbod/<naam>`.
+- Via **Pagina's** pas je Home, Over mij, Aanbod, Blog, Contact en Privacy aan. Ook de slogan en alle kopjes op de homepagina staan daar.
+- Bij **Aanbod** kun je per behandeling meerdere tarieven zetten, bijv. *30 minuten – € 45* en *60 minuten – € 75*. Klik op **+ Tarief toevoegen**.
 - Je telefoonnummer, WhatsApp en adres staan bij **Pagina's → Contact**. Ze worden overal op de site gebruikt.
 - Klik altijd op **Opslaan & bekijken**. Je gaat dan meteen naar de pagina zelf.
 - Terug naar je website? Klik op **Naar mijn website**.

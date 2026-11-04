@@ -134,15 +134,6 @@ section { padding: clamp(64px, 10vw, 120px) 0; position: relative; }
 .card h3 { font-size: 1.45rem; margin-bottom: .35em; }
 .card p { color: var(--muted); margin: 0; }
 .card .price { margin-top: 14px; font-weight: 700; color: var(--primary); }
-.card { position: relative; display: flex; flex-direction: column; }
-.card h2.card-title { font-size: 1.55rem; }
-.card .card-link { color: inherit; text-decoration: none; }
-.card .card-link::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
-.card .card-link:focus-visible { outline: none; }
-.card.has-link:focus-within { outline: 2px solid var(--primary); outline-offset: 3px; }
-.card.has-link { cursor: pointer; }
-.card .more { margin-top: auto; padding-top: 16px; font-weight: 700; color: var(--primary); }
-.card.has-link:hover .more { text-decoration: underline; }
 
 /* Creatiespiraal */
 .spiral { display: flex; justify-content: center; flex-wrap: wrap; gap: 0; list-style: none; padding: 0; margin: 0; counter-reset: s; }
@@ -189,23 +180,6 @@ section { padding: clamp(64px, 10vw, 120px) 0; position: relative; }
 .article-img img { border-radius: var(--radius); box-shadow: var(--shadow); width: 100%; }
 .article-img figcaption { text-align: center; color: var(--muted); font-size: .9rem; margin-top: 10px; }
 .article-foot { margin-top: 48px; padding-top: 32px; border-top: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); display: grid; gap: 28px; }
-/* Aanbod: eigen pagina */
-.back-link { display: inline-block; margin-bottom: 18px; font-weight: 700; font-size: .9rem; color: var(--primary); text-decoration: none; }
-.back-link:hover { text-decoration: underline; }
-.service-ic { width: 64px; height: 64px; margin: 0 auto; color: var(--accent); }
-.service-price { display: inline-block; margin: 18px 0 0; padding: 8px 18px; border-radius: 999px; background: var(--surface); box-shadow: var(--shadow); font-weight: 700; color: var(--primary); }
-.service-page .prose { margin-bottom: 40px; }
-.service-page .share { margin: 8px 0 24px; padding-top: 28px; border-top: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); }
-.faq { margin-bottom: 48px; }
-.faq h2 { font-size: clamp(1.6rem, 3.5vw, 2.2rem); margin-bottom: .6em; }
-.faq-item { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 12px; border: 1px solid color-mix(in srgb, var(--accent) 16%, transparent); }
-.faq-item summary { cursor: pointer; list-style: none; padding: 18px 52px 18px 22px; font: 600 1.25rem/1.35 var(--serif); color: var(--primary); position: relative; }
-.faq-item summary::-webkit-details-marker { display: none; }
-.faq-item summary::after { content: "+"; position: absolute; right: 22px; top: 50%; transform: translateY(-50%); font: 400 1.6rem var(--sans); color: var(--accent); transition: transform .2s; }
-.faq-item[open] summary::after { transform: translateY(-50%) rotate(45deg); }
-.faq-item summary:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: var(--radius); }
-.faq-a { padding: 0 22px 18px; color: var(--text); }
-.faq-a p { margin: 0 0 .8em; } .faq-a p:last-child { margin: 0; }
 .signature { font-family: var(--script); font-size: 2.4rem; color: var(--accent); }
 
 /* Delen */
@@ -349,3 +323,25 @@ html.editor-open, html.editor-open body { overflow: hidden; }
 
 .empty { text-align: center; color: var(--muted); padding: 40px 0; }
 .loading { min-height: 60vh; }
+
+/* Tarieven per behandeling */
+.card .prices { margin: 18px 0 0; padding-top: 14px; border-top: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); display: grid; gap: 8px; }
+.price-line { display: flex; align-items: baseline; gap: 8px; }
+.price-line dt { flex: 1; display: flex; align-items: baseline; gap: 8px; color: var(--text); font-size: .95rem; min-width: 0; }
+.price-line dt::after { content: ''; flex: 1; min-width: 12px; border-bottom: 1px dotted color-mix(in srgb, var(--accent) 70%, transparent); transform: translateY(-4px); }
+.price-line dt:empty::after { border: 0; }
+.price-line dd { margin: 0; font-weight: 700; color: var(--primary); white-space: nowrap; }
+
+/* Onderwerpen onderaan het blog */
+.tag-active { text-align: center; margin: 0 0 28px; color: var(--muted); }
+.tag-active a { font-weight: 700; }
+.tag-cloud-wrap { padding: clamp(40px, 6vw, 64px) 0; }
+.tag-h { font-size: 1.6rem; text-align: center; margin-bottom: 18px; }
+.tag-cloud { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.tag-cloud a { padding: 7px 14px; border-radius: 999px; background: var(--surface); border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); text-decoration: none; color: var(--text); font-weight: 600; font-size: .9rem; }
+.tag-cloud a small { color: var(--muted); font-weight: 400; margin-left: 2px; }
+.tag-cloud a.on, .tag-cloud a:hover { background: var(--primary); color: var(--primary-ink); border-color: var(--primary); }
+.tag-cloud a.on small, .tag-cloud a:hover small { color: inherit; opacity: .8; }
+.tag-more { margin-top: 14px; text-align: center; }
+.tag-more summary { cursor: pointer; font-weight: 700; color: var(--primary); display: inline-block; padding: 8px 12px; }
+.tag-more .tag-cloud { margin-top: 10px; }

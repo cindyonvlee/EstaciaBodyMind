@@ -5,7 +5,7 @@ Cindy beheert alles zelf via `/admin`.
 
 ```
 public/                 ← wordt door Netlify gepubliceerd
-  index.html, over-mij.html, aanbod.html, aanbod-item.html, nieuws.html, artikel.html, contact.html, privacy.html, 404.html
+  index.html, over-mij.html, aanbod.html, nieuws.html, artikel.html, contact.html, privacy.html, 404.html
   admin/                ← beheeromgeving (login via Supabase)
   js/config.js          ← ⚙️ Supabase URL + publishable key + credit websitebouwer (NIET via admin aanpasbaar)
   js/defaults.js        ← startinhoud (ook terugval als de database niet bereikbaar is)

@@ -8,7 +8,6 @@ import {
 import { isConfigured } from '/js/config.js';
 import { THEMES, COLOR_LABELS } from '/js/themes.js';
 import { ICONS } from '/js/icons.js';
-import { ensureSlugs, hasPage, slugifyService } from '/js/services.js';
 
 const DEMO = !isConfigured();
 // Embed-modus: de beheerschermen openen in een zijpaneel óp de website (zie /js/site.js → openEditor)
@@ -190,7 +189,7 @@ async function shell(contentFn) {
     <nav class="side" id="side" aria-label="Beheer">
       <a class="logo" href="#/">ESTACIA<small>Beheer</small></a>
       ${NAV.map(([href, ic, label]) => {
-        const on = href === '#/' ? hash === '#/' || hash === '' : hash.startsWith(href) || (href === '#/paginas' && (hash.startsWith('#/pagina/') || hash.startsWith('#/aanbod/')));
+        const on = href === '#/' ? hash === '#/' || hash === '' : hash.startsWith(href) || (href === '#/paginas' && hash.startsWith('#/pagina/'));
         return `<a class="nav ${on ? 'on' : ''}" href="${href}"><span>${ic}</span>${label}${href === '#/berichten' && unread ? `<span class="badge">${unread}</span>` : ''}</a>`;
       }).join('')}
       <div class="grow"></div>
@@ -222,7 +221,6 @@ function route() {
   if (p[0] === 'nieuws') return shell(viewNews);
   if (p[0] === 'paginas') return shell(viewPages);
   if (p[0] === 'pagina' && SCHEMAS[p[1]]) return shell((v) => viewPageEditor(v, p[1]));
-  if (p[0] === 'aanbod' && p[1]) return shell((v) => viewServiceEditor(v, decodeURIComponent(p[1])));
   if (p[0] === 'stijl') return shell(viewTheme);
   if (p[0] === 'berichten') return shell(viewMessages);
   if (p[0] === 'instellingen') return shell(viewSettings);
@@ -243,7 +241,7 @@ async function viewDashboard(v) {
     <a class="tile" href="#/berichten"><span class="em">💌</span><strong>Berichten ${unread ? `<span class="badge">${unread} nieuw</span>` : ''}</strong><span>Wat mensen via het contactformulier stuurden</span></a>
     <a class="tile" href="#/pagina/home"><span class="em">🏠</span><strong>Homepagina aanpassen</strong><span>Teksten en foto bovenaan</span></a>
     <a class="tile" href="#/pagina/contact"><span class="em">📞</span><strong>Contactgegevens</strong><span>Telefoon, WhatsApp, adres, socials</span></a>
-    <a class="tile" href="#/pagina/aanbod"><span class="em">🌸</span><strong>Aanbod & prijzen</strong><span>Wat je aanbiedt, met uitleg per onderdeel</span></a>
+    <a class="tile" href="#/pagina/aanbod"><span class="em">🌸</span><strong>Aanbod & prijzen</strong><span>Wat je aanbiedt</span></a>
     <a class="tile" href="#/stijl"><span class="em">🎨</span><strong>Kleuren & stijl</strong><span>Kies een sfeer voor je website</span></a>
     <a class="tile" href="#/hulp"><span class="em">❓</span><strong>Hulp</strong><span>Korte uitleg over alles</span></a>
   </div>`);
@@ -448,86 +446,64 @@ function linesField(label, arr = [], help = '') {
   return { el: f.el, get: () => f.get().split('\n').map((s) => s.trim()).filter(Boolean) };
 }
 
-function servicesField(items = [], { onOpenPage } = {}) {
-  // Elk onderdeel bewaart ook zijn eigen pagina (slug, foto, uitleg, vragen). Die velden
-  // worden hier niet getoond, maar moeten bij het opslaan wél bewaard blijven.
+function servicesField(items = []) {
   let list = structuredClone(items || []);
   const el = h('<div><div class="reps"></div><button type="button" class="btn ghost" data-add>+ Onderdeel toevoegen</button></div>');
   const wrap = $('.reps', el);
   const read = () => $$('.rep', wrap).map((r) => ({
-    ...r._item,
     icon: $('input[type=radio]:checked', r)?.value || 'lotus',
     title: $('[data-k=title]', r).value.trim(),
     text: $('[data-k=text]', r).value.trim(),
-    price: $('[data-k=price]', r).value.trim(),
+    prices: $$('.price-row', r).map((row) => ({
+      label: $('[data-k=plabel]', row).value.trim(),
+      price: $('[data-k=pprice]', row).value.trim(),
+    })).filter((p) => p.label || p.price),
   }));
+  // Oud formaat (één prijsveld) omzetten naar een tarievenlijst
+  const pricesOf = (it) => (it.prices?.length ? it.prices : it.price ? [{ label: '', price: it.price }] : []);
+  const priceRow = (p = {}) => {
+    const row = h(`<div class="price-row">
+      <input type="text" data-k="plabel" aria-label="Omschrijving tarief" placeholder="Bijv. 30 minuten, per uur, per sessie">
+      <input type="text" data-k="pprice" aria-label="Prijs" placeholder="€ 45">
+      <button type="button" class="btn sm danger" aria-label="Tarief verwijderen" title="Tarief verwijderen">×</button>
+    </div>`);
+    $('[data-k=plabel]', row).value = p.label || '';
+    $('[data-k=pprice]', row).value = p.price || '';
+    $('button', row).addEventListener('click', () => { row.remove(); markDirty(); });
+    return row;
+  };
   const draw = () => {
     wrap.innerHTML = '';
     list.forEach((it, i) => {
       const name = 'ic' + Math.random().toString(36).slice(2, 7);
-      const page = hasPage(it);
-      const draft = !page && hasPage(it, { preview: true });
       const r = h(`<div class="rep">
         <div class="rep-head"><strong>Onderdeel ${i + 1}</strong>
           <div class="btns"><button type="button" class="btn sm ghost" data-up ${i === 0 ? 'disabled' : ''} aria-label="Omhoog">↑</button><button type="button" class="btn sm ghost" data-down ${i === list.length - 1 ? 'disabled' : ''} aria-label="Omlaag">↓</button><button type="button" class="btn sm danger" data-rm>Verwijderen</button></div></div>
         <div class="f"><span class="lbl">Icoon</span><div class="icons">${Object.entries(ICONS).map(([k, svg]) => `<label title="${k}"><input type="radio" name="${name}" value="${k}" ${it.icon === k ? 'checked' : ''}><span>${svg}</span></label>`).join('')}</div></div>
-        <div class="grid2"><div class="f"><label>Titel</label><input type="text" data-k="title"></div><div class="f"><label>Prijs / duur (mag leeg)</label><input type="text" data-k="price" placeholder="Bijv. € 75 · 60 minuten"></div></div>
-        <div class="f"><label>Korte omschrijving</label><textarea data-k="text" style="min-height:80px"></textarea><div class="help">Staat op het kaartje. De uitgebreide uitleg schrijf je op de eigen pagina.</div></div>
-        <div class="page-row ${page ? 'on' : ''}">
-          <span>${page ? `📖 Heeft een eigen pagina: <a href="/aanbod/${esc(it.slug)}" target="_blank" rel="noopener">${esc(location.host)}/aanbod/${esc(it.slug)}</a>`
-            : draft ? '📝 Eigen pagina staat als <strong>concept</strong> klaar (alleen zichtbaar voor jou).'
-            : '📖 Nog geen eigen pagina. Schrijf uitleg, dan verschijnt “Lees meer” op het kaartje.'}</span>
-          <button type="button" class="btn sm" data-page>${page || draft ? 'Pagina bewerken' : 'Uitleg schrijven'} →</button>
+        <div class="f"><label>Titel</label><input type="text" data-k="title"></div>
+        <div class="f"><label>Korte omschrijving</label><textarea data-k="text" style="min-height:80px"></textarea></div>
+        <div class="f" style="margin:0"><span class="lbl">Tarieven</span>
+          <div class="help" style="margin:0 0 8px">Voeg zoveel tarieven toe als je wilt, bijv. <em>30 minuten – € 45</em> en <em>60 minuten – € 75</em>, of <em>per sessie – € 65</em>. Geen tarief? Laat leeg.</div>
+          <div class="prices"></div>
+          <button type="button" class="btn sm ghost" data-addprice>+ Tarief toevoegen</button>
         </div>
       </div>`);
-      r._item = it;
       $('[data-k=title]', r).value = it.title || '';
-      $('[data-k=price]', r).value = it.price || '';
       $('[data-k=text]', r).value = it.text || '';
+      const pr = $('.prices', r);
+      pricesOf(it).forEach((p) => pr.appendChild(priceRow(p)));
+      $('[data-addprice]', r).addEventListener('click', () => { const row = priceRow(); pr.appendChild(row); markDirty(); $('input', row).focus(); });
       r.addEventListener('input', markDirty);
       r.addEventListener('change', markDirty);
-      $('[data-rm]', r).addEventListener('click', () => { if (confirm('Dit onderdeel verwijderen? De eigen pagina verdwijnt dan ook.')) { list = read(); list.splice(i, 1); markDirty(); draw(); } });
-      $('[data-up]', r).addEventListener('click', () => { list = read(); [list[i - 1], list[i]] = [list[i], list[i - 1]]; markDirty(); draw(); });
-      $('[data-down]', r).addEventListener('click', () => { list = read(); [list[i + 1], list[i]] = [list[i], list[i + 1]]; markDirty(); draw(); });
-      $('[data-page]', r).addEventListener('click', (e) => {
-        if (!$('[data-k=title]', r).value.trim()) { toast('Geef dit onderdeel eerst een titel.'); $('[data-k=title]', r).focus(); return; }
-        onOpenPage?.(read().slice(0, i).filter((x) => x.title).length, e.currentTarget); // plek in de opgeslagen lijst
-      });
-      wrap.appendChild(r);
-    });
-  };
-  $('[data-add]', el).addEventListener('click', () => { list = read(); list.push({ icon: 'lotus', title: '', text: '', price: '' }); markDirty(); draw(); $$('.rep [data-k=title]', wrap).pop()?.focus(); });
-  draw();
-  return { el, get: () => ensureSlugs(read().filter((x) => x.title)) };
-}
-
-// Vragen met uitklapbaar antwoord ("Wat is 5DFlow?", "Hoe voelt een sessie?")
-function faqField(items = []) {
-  let list = structuredClone(items || []);
-  const el = h('<div><div class="reps"></div><button type="button" class="btn ghost" data-add>+ Vraag toevoegen</button></div>');
-  const wrap = $('.reps', el);
-  const read = () => $$('.rep', wrap).map((r) => ({ q: $('[data-k=q]', r).value.trim(), a: $('[data-k=a]', r).value.trim() }));
-  const draw = () => {
-    wrap.innerHTML = '';
-    list.forEach((it, i) => {
-      const r = h(`<div class="rep">
-        <div class="rep-head"><strong>Vraag ${i + 1}</strong>
-          <div class="btns"><button type="button" class="btn sm ghost" data-up ${i === 0 ? 'disabled' : ''} aria-label="Omhoog">↑</button><button type="button" class="btn sm ghost" data-down ${i === list.length - 1 ? 'disabled' : ''} aria-label="Omlaag">↓</button><button type="button" class="btn sm danger" data-rm>Verwijderen</button></div></div>
-        <div class="f"><label>Vraag of begrip</label><input type="text" data-k="q" placeholder="Bijv. Wat is 5DFlow Spinal Therapy?"></div>
-        <div class="f" style="margin:0"><label>Uitleg</label><textarea data-k="a" style="min-height:110px" placeholder="Leg het uit zoals je het aan een vriendin zou vertellen."></textarea><div class="help">Een witregel maakt een nieuwe alinea.</div></div>
-      </div>`);
-      $('[data-k=q]', r).value = it.q || '';
-      $('[data-k=a]', r).value = it.a || '';
-      r.addEventListener('input', markDirty);
-      $('[data-rm]', r).addEventListener('click', () => { if (confirm('Deze vraag verwijderen?')) { list = read(); list.splice(i, 1); markDirty(); draw(); } });
+      $('[data-rm]', r).addEventListener('click', () => { if (confirm('Dit onderdeel verwijderen?')) { list = read(); list.splice(i, 1); markDirty(); draw(); } });
       $('[data-up]', r).addEventListener('click', () => { list = read(); [list[i - 1], list[i]] = [list[i], list[i - 1]]; markDirty(); draw(); });
       $('[data-down]', r).addEventListener('click', () => { list = read(); [list[i + 1], list[i]] = [list[i], list[i + 1]]; markDirty(); draw(); });
       wrap.appendChild(r);
     });
   };
-  $('[data-add]', el).addEventListener('click', () => { list = read(); list.push({ q: '', a: '' }); markDirty(); draw(); $$('.rep [data-k=q]', wrap).pop()?.focus(); });
+  $('[data-add]', el).addEventListener('click', () => { list = read(); list.push({ icon: 'lotus', title: '', text: '', prices: [] }); markDirty(); draw(); $$('.rep [data-k=title]', wrap).pop()?.focus(); });
   draw();
-  return { el, get: () => read().filter((x) => x.q) };
+  return { el, get: () => read().filter((x) => x.title) };
 }
 
 // SEO-blok met tellers en voorbeeld van Google & Facebook
@@ -685,11 +661,14 @@ const SCHEMAS = {
         ['heroImage', 'Foto', 'image'],
         ['ctaPrimary', 'Tekst op de hoofdknop (naar contact)', 'text'],
         ['ctaSecondary', 'Tekst op de tweede knop (naar over mij)', 'text'],
+        ['tagline', 'Slogan onder de knoppen', 'text', 'Bijv. “Herstel. Verbind. Creëer vanuit je hart. Behoud je energie.” Laat leeg om te verbergen.'],
       ] },
       { title: '🤍 Introductie', fields: [['introTitle', 'Kop', 'text'], ['introText', 'Tekst', 'rich-sm']] },
-      { title: '🌀 De Creatiespiraal', hint: 'Laat de stappen leeg om dit blok te verbergen.', fields: [['spiralTitle', 'Kop', 'text'], ['spiral', 'Stappen (één per regel)', 'lines']] },
+      { title: '🌸 Aanbod-blok', hint: 'De kaartjes zelf pas je aan bij Pagina’s → Aanbod.', fields: [['servicesEyebrow', 'Klein kopje boven “Aanbod”', 'text']] },
+      { title: '🌀 De Creatiespiraal', hint: 'Laat de stappen leeg om dit blok te verbergen.', fields: [['spiralEyebrow', 'Klein kopje', 'text'], ['spiralTitle', 'Kop', 'text'], ['spiral', 'Stappen (één per regel)', 'lines']] },
       { title: '💬 Quote', hint: 'Laat de quote leeg om dit blok te verbergen.', fields: [['quote', 'Quote', 'textarea'], ['quoteSub', 'Tweede regel (in sierletters)', 'text']] },
-      { title: '📝 Blog-blok', fields: [['newsTitle', 'Kop boven je laatste verhalen', 'text']] },
+      { title: '📝 Blog-blok', fields: [['newsEyebrow', 'Klein kopje', 'text'], ['newsTitle', 'Kop boven je laatste verhalen (ook de titel van de blogpagina)', 'text']] },
+      { title: '👋 Onderaan: kennismaken', fields: [['ctaTitle', 'Kop', 'text'], ['ctaText', 'Tekst', 'textarea']] },
     ],
   },
   over: {
@@ -699,9 +678,15 @@ const SCHEMAS = {
   },
   aanbod: {
     label: 'Aanbod', key: 'services', view: '/aanbod', seo: 'aanbod', panels: [
-      { title: '🌸 Aanbod', fields: [['title', 'Titel', 'text'], ['intro', 'Introductie', 'textarea']] },
-      { title: '📋 Onderdelen', hint: 'De eerste 4 worden ook op de homepagina getoond.', fields: [['items', '', 'services']] },
-      { title: '👉 Onderaan', fields: [['ctaText', 'Tekst bij de contactknop', 'textarea']] },
+      { title: '🌸 Aanbod', fields: [['eyebrow', 'Klein kopje', 'text'], ['title', 'Titel', 'text'], ['intro', 'Introductie', 'textarea']] },
+      { title: '📋 Behandelingen & tarieven', hint: 'De eerste 4 worden ook op de homepagina getoond (zonder tarieven).', fields: [['items', '', 'services']] },
+      { title: '👉 Onderaan', fields: [['ctaTitle', 'Kop', 'text'], ['ctaText', 'Tekst bij de contactknop', 'textarea']] },
+    ],
+  },
+  blog: {
+    label: 'Blog (overzicht & verhalen)', key: 'blog', view: '/nieuws', seo: 'nieuws', panels: [
+      { title: '📝 Blogoverzicht', hint: 'De titel van de blogpagina pas je aan bij Homepagina → Blog-blok.', fields: [['intro', 'Introductietekst onder de titel', 'textarea']] },
+      { title: '👋 Onder elk verhaal', fields: [['ctaTitle', 'Kop', 'text'], ['ctaText', 'Tekst', 'textarea'], ['moreTitle', 'Kop boven “meer verhalen”', 'text']] },
     ],
   },
   contact: {
@@ -737,6 +722,7 @@ async function viewPages(v) {
 async function viewPageEditor(v, name) {
   const schema = SCHEMAS[name];
   const data = structuredClone(settings[schema.key] || {});
+  if (name === 'home' && data.tagline === undefined) data.tagline = settings.site.tagline || '';
   v.insertAdjacentHTML('beforeend', `<a class="crumb" href="#/paginas">← Pagina’s</a><div class="head"><div><h1>${esc(schema.label)}</h1><p>${esc(location.host + schema.view)}</p></div><a class="btn ghost" href="${schema.view}">Bekijk pagina</a></div>`);
   const getters = {};
   let firstImage = () => '';
@@ -749,14 +735,7 @@ async function viewPageEditor(v, name) {
       else if (type === 'rich' || type === 'rich-sm') f = richField(label, data[k], { small: type === 'rich-sm' });
       else if (type === 'image') { f = imageField(label, data[k], { nameHint: () => 'estacia-' + name }); const ff = f; firstImage = () => ff.get().url; }
       else if (type === 'lines') f = linesField(label, data[k], help || '');
-      else if (type === 'services') f = servicesField(data[k], {
-        // Eerst de lijst opslaan (zodat het onderdeel een webadres heeft), dan naar de eigen pagina
-        onOpenPage: (i, btn) => busy(btn, async () => {
-          const out = await doSave(false, { quiet: true });
-          const slug = out?.[k]?.[i]?.slug || slugifyService(getters[k]()[i]?.title);
-          location.hash = '#/aanbod/' + encodeURIComponent(slug);
-        }),
-      });
+      else if (type === 'services') f = servicesField(data[k]);
       p.append(f.el);
       getters[k] = f.get;
     }
@@ -771,15 +750,10 @@ async function viewPageEditor(v, name) {
   });
   v.append(seo.el);
 
-  const doSave = async (view, { quiet = false } = {}) => {
+  const doSave = async (view) => {
     const out = { ...data };
     for (const [k, get] of Object.entries(getters)) out[k] = get();
-    if (DEMO) {
-      dirty = false;
-      if (schema.key === 'services') settings.services = out; // demo: wel even onthouden in het geheugen
-      if (!quiet) toast('Demo: niet opgeslagen');
-      return out;
-    }
+    if (DEMO) { dirty = false; toast('Demo: niet opgeslagen'); return; }
     const seoVal = structuredClone(settings.seo);
     seoVal.pages[schema.seo] = seo.get();
     await saveSetting(schema.key, out);
@@ -787,111 +761,7 @@ async function viewPageEditor(v, name) {
     clearSettingsCache(); settings = await getSettings();
     dirty = false;
     if (view) return goToSite(schema.view);
-    if (!quiet) toast('Opgeslagen ✓');
-    return out;
-  };
-  v.append(saveBar([
-    button('Opslaan & bekijken', '', (b) => busy(b, () => doSave(true))),
-    button('Alleen opslaan', 'ghost', (b) => busy(b, () => doSave(false))),
-  ]));
-}
-
-// ── Aanbod: eigen pagina per onderdeel ────────────────
-const SERVICE_TEMPLATE = '<h2>Wat is het?</h2><p>Leg in je eigen woorden uit wat dit is. Ga ervan uit dat de lezer de term nog nooit heeft gehoord.</p><h2>Voor wie is het?</h2><p>Herkent iemand zichzelf? Beschrijf hoe het voelt om hier last van te hebben.</p><h2>Hoe verloopt een sessie?</h2><p>Wat gebeurt er van binnenkomst tot afscheid? Wat merkt iemand tijdens en na de sessie?</p><h2>Wat kan het je brengen?</h2><p>Vertel wat mensen ervaren. Een kort (anoniem) voorbeeld maakt het tastbaar.</p>';
-
-async function viewServiceEditor(v, slug) {
-  let origSlug = slug;
-  const it = (settings.services?.items || []).find((x) => x.slug === slug);
-  v.insertAdjacentHTML('beforeend', '<a class="crumb" href="#/pagina/aanbod">← Aanbod</a>');
-  if (!it) { v.insertAdjacentHTML('beforeend', '<div class="panel empty">Dit onderdeel is niet gevonden. Misschien is de titel of het webadres veranderd. Ga terug naar het aanbod.</div>'); return; }
-
-  v.insertAdjacentHTML('beforeend', `<div class="head"><div><h1>${esc(it.title)}</h1><p>De eigen pagina met uitleg over dit aanbod</p></div>${hasPage(it) ? `<a class="btn ghost" href="/aanbod/${esc(it.slug)}">Bekijk pagina</a>` : ''}</div>
-    <div class="editor-grid"><div class="col-main"></div><aside class="col-side"></aside></div>`);
-  const main = $('.col-main', v); const side = $('.col-side', v);
-
-  // Basis
-  const pBase = h('<div class="panel"></div>');
-  const title = textField('Titel', it.title, { cls: 'big' });
-  const slugEl = h(`<div class="f"><label>Webadres (URL)</label><div class="slug"><span>${esc(location.host)}/aanbod/</span><input type="text" aria-label="URL"></div><div class="help">Liever niet meer wijzigen als je de link al gedeeld hebt.</div></div>`);
-  const slugInput = $('input', slugEl); slugInput.value = it.slug;
-  slugInput.addEventListener('input', () => { markDirty(); seo.update(); });
-  slugInput.addEventListener('blur', () => { slugInput.value = slugifyService(slugInput.value) || slugifyService(title.get()); });
-  const text = textField('Korte omschrijving', it.text, { multiline: true, help: 'Staat op het kaartje én bovenaan deze pagina. Eén of twee zinnen.' });
-  text.input.style.minHeight = '80px';
-  const price = textField('Prijs / duur (mag leeg)', it.price, { placeholder: 'Bijv. € 75 · 60 minuten' });
-  pBase.append(title.el, slugEl, text.el, price.el);
-
-  // Verhaal
-  const pStory = h('<div class="panel"><h2>📖 Het verhaal</h2><p class="hint">Vertel wat dit is, voor wie het is en hoe een sessie verloopt. Voeg foto’s toe met het fotoknopje 🖼️ in de balk; ze komen precies waar je cursor staat.</p></div>');
-  const content = richField('Uitleg', it.content || '');
-  pStory.append(content.el);
-  if (!it.content) {
-    const tpl = h('<div class="btns" style="margin-top:-6px"><button type="button" class="btn sm ghost">✨ Begin met een opzet (kopjes invullen)</button></div>');
-    $('button', tpl).addEventListener('click', () => {
-      if (content.get() && !confirm('Er staat al tekst. De opzet wordt eronder gezet. Doorgaan?')) return;
-      const q = content.quill;
-      q.clipboard.dangerouslyPasteHTML(q.getLength() - 1, SERVICE_TEMPLATE, 'user');
-      tpl.remove();
-    });
-    pStory.append(tpl);
-  }
-
-  // Meer uitleg
-  const pFaq = h('<div class="panel"><h2>💡 Meer uitleg</h2><p class="hint">Vragen en begrippen die bezoekers kunnen openklikken. Handig voor termen die niet iedereen kent, of vragen die je vaak krijgt.</p></div>');
-  const faqTitle = textField('Kop boven dit blok', it.faqTitle || '', { placeholder: 'Meer uitleg' });
-  const faq = faqField(it.faq || []);
-  pFaq.append(faqTitle.el, faq.el);
-  main.append(pBase, pStory, pFaq);
-
-  // Zijkolom
-  const pVis = h(`<div class="panel"><h2>👁️ Zichtbaarheid</h2>
-    <div class="f" style="margin:0"><label for="vis">Pagina</label><select id="vis"><option value="live">Zichtbaar voor iedereen</option><option value="draft">Concept (alleen voor mij)</option></select>
-    <div class="help">De pagina verschijnt pas als er uitleg in staat. Als concept zie alleen jij hem, zolang je ingelogd bent.</div></div></div>`);
-  $('#vis', pVis).value = it.draft ? 'draft' : 'live';
-  pVis.addEventListener('change', markDirty);
-  const pImg = h('<div class="panel"><h2>🖼️ Foto bovenaan</h2><p class="hint">Wordt ook getoond als iemand de pagina deelt op Facebook of WhatsApp.</p></div>');
-  const img = imageField('Foto', it.image || {}, { nameHint: () => title.get() || 'aanbod', help: 'Bij “Titel van de foto” kun je een onderschrift zetten.' });
-  pImg.append(img.el);
-  pImg.addEventListener('click', () => setTimeout(() => seo.update(), 50));
-  const seo = seoPanel({ title: it.seo_title, description: it.seo_description }, {
-    fallbackTitle: () => (title.get() || 'Titel') + ' | Estacia',
-    fallbackDesc: () => text.get() || 'Korte omschrijving…',
-    path: () => '/aanbod/' + (slugifyService(slugInput.value) || slugifyService(title.get())),
-    image: () => img.get().url || settings.seo.image,
-  });
-  side.append(pVis, pImg, seo.el);
-  title.input.addEventListener('input', () => seo.update());
-  text.input.addEventListener('input', () => seo.update());
-
-  const doSave = async (view) => {
-    if (!title.get()) { title.input.focus(); throw new Error('Geef dit onderdeel een titel.'); }
-    const newSlug = slugifyService(slugInput.value) || slugifyService(title.get());
-    slugInput.value = newSlug;
-    if (!DEMO) { clearSettingsCache(); settings = await getSettings(); }
-    const sv = structuredClone(settings.services);
-    const items = sv.items || [];
-    const idx = items.findIndex((x) => x.slug === origSlug);
-    if (items.some((x, i) => i !== idx && x.slug === newSlug)) { slugInput.focus(); throw new Error('Dit webadres wordt al gebruikt door een ander onderdeel. Kies een ander.'); }
-    const s2 = seo.get();
-    const updated = {
-      ...(idx >= 0 ? items[idx] : { icon: 'lotus' }),
-      title: title.get(), slug: newSlug, text: text.get(), price: price.get(),
-      image: img.get(), content: content.get(), faqTitle: faqTitle.get(), faq: faq.get(),
-      draft: $('#vis', pVis).value === 'draft',
-      seo_title: s2.title, seo_description: s2.description,
-    };
-    if (idx >= 0) items[idx] = updated; else items.push(updated);
-    sv.items = items;
-    if (DEMO) settings.services = sv;
-    else { await saveSetting('services', sv); clearSettingsCache(); settings = await getSettings(); }
-    dirty = false;
-    if (newSlug !== origSlug) { origSlug = newSlug; history.replaceState(null, '', '#/aanbod/' + encodeURIComponent(newSlug)); lastHash = location.hash; }
-    const filled = hasPage({ ...updated, draft: false });
-    if (view) {
-      if (!filled) { toast('Opgeslagen ✓ Schrijf nog wat uitleg, dan komt de pagina online.', 4500); return; }
-      return goToSite('/aanbod/' + encodeURIComponent(newSlug));
-    }
-    toast(DEMO ? 'Demo: niet opgeslagen' : updated.draft ? 'Opgeslagen als concept ✓' : 'Opgeslagen ✓');
+    toast('Opgeslagen ✓');
   };
   v.append(saveBar([
     button('Opslaan & bekijken', '', (b) => busy(b, () => doSave(true))),
@@ -1012,19 +882,14 @@ async function viewSettings(v) {
   const f = {
     title: textField('Naam', site.title),
     subtitle: textField('Ondertitel', site.subtitle),
-    tagline: textField('Slogan', site.tagline, { help: 'Staat op de homepagina onder de knoppen.' }),
     footerText: textField('Tekst onderaan elke pagina', site.footerText, { multiline: true }),
     poweredBy: textField('Extra regel onderaan (mag leeg)', site.poweredBy),
   };
   Object.values(f).forEach((x) => p1.append(x.el));
 
-  const p2 = h('<div class="panel"><h2>🔎 Vindbaarheid</h2><p class="hint">De SEO per pagina stel je in onderaan elke pagina (bij Pagina’s) en bij elk verhaal.</p></div>');
+  const p2 = h('<div class="panel"><h2>🔎 Vindbaarheid</h2><p class="hint">De SEO per pagina stel je in onderaan elke pagina (bij Pagina’s, ook voor het blogoverzicht) en bij elk verhaal.</p></div>');
   const siteUrl = textField('Webadres van de site', seoAll.siteUrl, { type: 'url', placeholder: 'https://www.estacia.nl', help: 'Je eigen domein. Wordt gebruikt voor Google (sitemap) en bij delen.' });
   const shareImg = imageField('Standaard deel-afbeelding', { url: seoAll.image }, { nameHint: () => 'estacia-delen', help: 'Wordt getoond als iemand een pagina zonder eigen foto deelt.' });
-  const blogSeo = seoPanel(seoAll.pages.nieuws || {}, {
-    fallbackTitle: () => 'Blog – Estacia', fallbackDesc: () => 'Omschrijving van je blogoverzicht…', path: () => '/nieuws', image: () => shareImg.get().url,
-  });
-  $('h2', blogSeo.el).textContent = '🔎 Blogoverzicht (/nieuws)';
   p2.append(siteUrl.el, shareImg.el);
 
   const p3 = h(`<div class="panel"><h2>🔑 Wachtwoord wijzigen</h2>
@@ -1038,14 +903,13 @@ async function viewSettings(v) {
     toast(error ? error.message : 'Wachtwoord gewijzigd ✓');
     $('#npw', p3).value = '';
   });
-  v.append(p1, p2, blogSeo.el, p3);
+  v.append(p1, p2, p3);
 
   const doSave = async (view) => {
     const out = { ...site };
     for (const [k, x] of Object.entries(f)) out[k] = x.get();
     seoAll.siteUrl = siteUrl.get().replace(/\/$/, '');
     seoAll.image = shareImg.get().url;
-    seoAll.pages.nieuws = blogSeo.get();
     if (DEMO) { dirty = false; toast('Demo: niet opgeslagen'); return; }
     await saveSetting('site', out); await saveSetting('seo', seoAll);
     clearSettingsCache(); settings = await getSettings(); dirty = false;
@@ -1085,15 +949,6 @@ async function viewHelp(v) {
       <li>Inloggen kan ook direct vanaf je website: klik helemaal onderaan op <strong>Inloggen</strong>.</li>
       <li>Via <strong>Pagina’s</strong> pas je teksten en foto’s aan van Home, Over mij, Aanbod, Contact en Privacy.</li>
       <li>Je telefoonnummer en WhatsApp pas je aan bij <strong>Pagina’s → Contact</strong>. Die worden overal op de site gebruikt.</li>
-    </ul>
-    <h2>📖 Uitleg bij je aanbod</h2>
-    <ul>
-      <li>Elk onderdeel van je aanbod kan een <strong>eigen pagina</strong> krijgen, bijvoorbeeld over herstel na een burn-out of 5DFlow Spinal Therapy.</li>
-      <li>Ga naar <strong>Pagina’s → Aanbod</strong> en klik bij een onderdeel op <strong>Uitleg schrijven →</strong>. Op de website kan het ook: open een aanbod-pagina en klik op <em>Bewerk deze pagina</em>.</li>
-      <li>Schrijf je verhaal en voeg foto’s toe met het fotoknopje in de balk. Geen inspiratie? Klik op <strong>Begin met een opzet</strong> voor handige kopjes.</li>
-      <li>Bij <strong>Meer uitleg</strong> zet je vragen of begrippen die bezoekers kunnen openklikken, zoals “Wat is 5DFlow?”.</li>
-      <li>Nog niet klaar? Zet de pagina op <strong>Concept</strong>. Dan zie alleen jij hem.</li>
-      <li>Zodra er uitleg staat, krijgt het kaartje op de website vanzelf een <strong>Lees meer →</strong>.</li>
     </ul>
     <h2>🎨 Kleuren</h2>
     <p>Bij <strong>Kleuren & stijl</strong> kies je een sfeer. Klik erop, kijk naar het voorbeeld en klik op <strong>Opslaan & bekijken</strong>.</p>
