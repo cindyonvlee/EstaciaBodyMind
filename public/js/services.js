@@ -35,3 +35,30 @@ export function ensureSlugs(items = []) {
     return { ...it, slug };
   });
 }
+
+// ── Tarieven ───────────────────────────────────────────
+// Een onderdeel heeft een lijst `prices: [{ label, price }]`.
+// Oude data had één tekstveld `price`, bijv. "30 minuten - 45 euro / 60 minuten - 75 euro / Trajecten".
+// Dat wordt hier automatisch opgeknipt in losse regels.
+export function parsePriceText(text = '') {
+  return String(text).split(/\s*(?:\/|\||\n|;)\s*/).map((part) => part.trim()).filter(Boolean).map((part) => {
+    // splits op het laatste streepje of dubbelepunt: "30 minuten - 45 euro" → label "30 minuten", prijs "€ 45"
+    const m = part.match(/^(.*\S)\s*(?:[-–—:]|·)\s*(\S.*)$/);
+    let label = m ? m[1] : part;
+    let price = m ? m[2] : '';
+    if (!m && /\d/.test(part) && /€|euro/i.test(part)) { label = ''; price = part; }
+    if (m && !/\d|aanvraag|gratis/i.test(price)) { label = part; price = ''; }
+    return { label: label.trim(), price: tidyPrice(price) };
+  });
+}
+
+export function tidyPrice(p = '') {
+  const t = String(p).trim();
+  const m = t.match(/^(?:€\s*)?(\d+(?:[.,]\d{1,2})?)(?:,-)?\s*(?:euro|eur)?$/i);
+  return m ? `€ ${m[1]}` : t;
+}
+
+export function servicePrices(it = {}) {
+  if (Array.isArray(it.prices) && it.prices.length) return it.prices.filter((p) => p && (p.label || p.price));
+  return it.price ? parsePriceText(it.price) : [];
+}

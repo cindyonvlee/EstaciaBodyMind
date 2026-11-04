@@ -1,5 +1,5 @@
 // Eigen pagina per aanbod-onderdeel: /aanbod/<slug>
-import { init, editButton, reveal, setMeta, sanitize, imgTag, waLink, serviceCard, shareBlock, bindShare } from '../site.js';
+import { init, editButton, reveal, setMeta, sanitize, imgTag, waLink, serviceCard, shareBlock, bindShare, priceList } from '../site.js';
 import { esc, looksLoggedIn } from '../api.js';
 import { LOTUS_MARK, icon } from '../icons.js';
 import { findService, hasPage } from '../services.js';
@@ -34,7 +34,7 @@ if (!it || !hasPage(it, { preview: looksLoggedIn() })) {
       <div class="service-ic">${icon(it.icon)}</div>
       <h1>${esc(it.title)}</h1>
       ${it.text ? `<p class="lead">${esc(it.text)}</p>` : ''}
-      ${it.price ? `<p class="service-price">${esc(it.price)}</p>` : ''}
+      ${priceList(it) ? `<div class="service-prices">${priceList(it)}</div>` : ''}
       <div class="divider">${LOTUS_MARK}</div>
     </header>
     ${it.image?.url ? `<figure class="article-img">${imgTag(it.image, { eager: true })}${it.image.title ? `<figcaption>${esc(it.image.title)}</figcaption>` : ''}</figure>` : ''}

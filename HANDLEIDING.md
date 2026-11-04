@@ -42,6 +42,16 @@ Bij **Blog & nieuws** staan onder elk verhaal knoppen:
 - Klik altijd op **Opslaan & bekijken**. Je gaat dan meteen naar de pagina zelf.
 - Terug naar je website? Klik op **Naar mijn website**.
 
+## Uitleg bij je aanbod (eigen pagina per onderdeel)
+
+- Ga naar **Pagina's → Aanbod** en klik bij een onderdeel op **Uitleg schrijven →**.
+- Schrijf wat het is, voor wie het is en hoe een sessie verloopt. Geen inspiratie? Klik op **Begin met een opzet** voor kopjes.
+- Foto's zet je in de tekst met het fotoknopje 🖼️, precies waar je cursor staat. Bovenaan kun je ook één grote foto kiezen.
+- Bij **Meer uitleg** zet je vragen of begrippen die bezoekers kunnen openklikken (bijv. "Wat is 5DFlow Spinal Therapy?").
+- Nog niet klaar? Zet de pagina op **Concept**: alleen jij ziet hem (als je ingelogd bent).
+- Zodra er uitleg staat, krijgt het kaartje vanzelf **Lees meer →** en staat de pagina op `/aanbod/<naam>`.
+
+
 ## Kleuren
 Bij **Kleuren & stijl** kies je een sfeer: Gouden Zonsopgang, Lavendel Avond, Rozentuin, Aarde & Honing, Maanlicht of Zonnebloem. Je kunt ook losse kleuren aanpassen.
 
